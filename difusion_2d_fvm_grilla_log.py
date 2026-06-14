@@ -83,17 +83,28 @@ def k_harm(k1, k2):
     return 2.0 * k1 * k2 / (k1 + k2 + 1e-30)
 
 # ============================================================
-# CONDICIÓN DE BORDE — extracción de calor PWM
-# q_on > 0 : calor saliendo del dominio  [W/m²]
+# CONDICIÓN DE BORDE — extracción de calor PWM con amplitud variable
 # ============================================================
-q_on   = 4000.0         # flujo de extracción cuando está ON  [W/m²]
-T_pwm  = 60.0           # período del ciclo PWM               [s]
+T_pwm  = 60.0           # período del ciclo PWM  [s]
 duty   = 0.5            # fracción del período encendido  (50%)
 
+def q_amplitude(t):
+    """
+    Amplitud del flujo de calor cuando el PWM está ON  [W/m²].
+    Modificar esta función para q variable en el tiempo.
+
+    Ejemplos:
+      return 4000.0                                      # constante
+      return 4000.0 * (1 - np.exp(-t / 150))            # rampa exponencial
+      return 2000.0 + 2000.0 * np.sin(np.pi*t / t_end) # senoidal
+      return np.interp(t, [0,200,400,800], [0,5000,2000,4000])  # tabla
+    """
+    return 4000.0        # constante por defecto
+
 def q_bc(t):
-    """Flujo de calor extraído [W/m²]. Positivo = sale."""
+    """Flujo extraído [W/m²]. Combina amplitud variable con lógica PWM."""
     phase = (t % T_pwm) / T_pwm
-    return q_on if phase < duty else 0.0
+    return q_amplitude(t) if phase < duty else 0.0
 
 # ============================================================
 # MALLA
